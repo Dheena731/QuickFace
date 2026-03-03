@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from .. import models
 from ..dependencies import get_db
 from ..storage.minio_backend import MinioStorageBackend
+from ..tasks import process_photo
 
 router = APIRouter()
 
@@ -38,6 +39,7 @@ async def upload_photos(
     db.commit()
     for photo in created:
         db.refresh(photo)
+        process_photo.delay(photo.id)
 
     return {
         "event_id": event_id,

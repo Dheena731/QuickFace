@@ -1,7 +1,8 @@
 from functools import lru_cache
 from typing import List
 
-from pydantic import AnyHttpUrl, BaseSettings, Field
+from pydantic import AnyHttpUrl, Field
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -26,6 +27,9 @@ class Settings(BaseSettings):
 
     # CORS / frontend
     cors_origins: List[AnyHttpUrl] = Field(default_factory=list, env="CORS_ORIGINS")
+
+    # Frontend base URL (optional, used mainly by Next.js)
+    next_public_api_base: str | None = Field(None, env="NEXT_PUBLIC_API_BASE")
 
     class Config:
         env_file = ".env"

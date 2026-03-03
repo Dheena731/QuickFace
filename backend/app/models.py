@@ -1,12 +1,13 @@
 import uuid
 from datetime import datetime
+from enum import Enum
 
-from sqlalchemy import JSON, Column, DateTime, Enum, Float, ForeignKey, Integer, String
+from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
-from sqlalchemy.dialects.postgresql import VECTOR
+from pgvector.sqlalchemy import Vector
 
 
 Base = declarative_base()
@@ -66,7 +67,7 @@ class FaceEmbedding(Base):
     event_id = Column(UUID(as_uuid=True), ForeignKey("events.id"), nullable=False)
     photo_id = Column(Integer, ForeignKey("photos.id"), nullable=False)
     face_index = Column(Integer, nullable=False)
-    embedding = Column(VECTOR(128), nullable=False)
+    embedding = Column(Vector(128), nullable=False)
     bbox = Column(JSON, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 

@@ -12,6 +12,11 @@ class StorageBackend(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def open(self, key: str) -> bytes:
+        """Return the full object contents as bytes."""
+        raise NotImplementedError
+
+    @abstractmethod
     def delete(self, key: str) -> None:
         raise NotImplementedError
 
