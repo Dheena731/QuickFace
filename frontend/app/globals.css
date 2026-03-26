@@ -9,15 +9,16 @@
   }
 
   html {
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   body {
     margin: 0;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    background: radial-gradient(1200px 800px at 15% 0%, rgba(56, 189, 248, 0.20), transparent 55%),
-      radial-gradient(900px 700px at 85% 10%, rgba(99, 102, 241, 0.16), transparent 55%),
-      radial-gradient(circle at top, #0f172a, #020617 60%);
+    background: radial-gradient(1000px 600px at 10% 0%, rgba(148, 163, 184, 0.12), transparent 50%),
+      radial-gradient(800px 500px at 90% 5%, rgba(186, 230, 253, 0.18), transparent 55%),
+      #f5f7fb;
+    color: #111827;
   }
 
   a {
@@ -32,7 +33,25 @@
 
 @layer utilities {
   .glass {
-    @apply border border-white/10 bg-white/5 backdrop-blur;
+    @apply border border-slate-200 bg-white/90 backdrop-blur;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm ring-1 ring-slate-900 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50;
+  }
+
+  .input-base {
+    @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-slate-400 focus:ring-4 focus:ring-slate-200;
+  }
+
+  .status-chip {
+    @apply rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 ring-1 ring-slate-200;
   }
 }
 

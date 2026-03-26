@@ -15,6 +15,7 @@ export default function EventsDashboardPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copiedEventId, setCopiedEventId] = useState<string | null>(null);
 
   const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
 
@@ -45,41 +46,48 @@ export default function EventsDashboardPage() {
     // For now, dashboard only shows events created in this session.
   }, []);
 
+  async function copyGuestLink(eventId: string) {
+    const link = `${window.location.origin}/events/${eventId}/search`;
+    await navigator.clipboard.writeText(link);
+    setCopiedEventId(eventId);
+    window.setTimeout(() => setCopiedEventId(null), 1600);
+  }
+
   return (
     <div className="space-y-8">
       <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-white">Events</h1>
-          <p className="text-sm text-slate-200">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Events</h1>
+          <p className="text-sm text-slate-600">
             Create an event, then share a single link for guests to find their photos.
           </p>
         </div>
-        <div className="glass w-fit rounded-xl px-3 py-2 text-xs text-slate-200">
-          API: <code className="text-slate-100">{apiBase}</code>
+        <div className="glass w-fit rounded-xl px-3 py-2 text-xs text-slate-600">
+          API: <code className="text-slate-900">{apiBase}</code>
         </div>
       </header>
 
       <section className="glass rounded-2xl p-5">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-white">Create event</h2>
-          <span className="text-xs text-slate-400">Guests will use selfie search</span>
+          <h2 className="text-sm font-semibold text-slate-900">Create event</h2>
+          <span className="status-chip">Step 1 of 3</span>
         </div>
 
         <form onSubmit={handleCreate} className="flex flex-col gap-3 md:flex-row md:items-center">
           <div className="flex-1">
-            <label className="mb-1 block text-xs font-medium text-slate-300">Event name</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600">Event name</label>
             <input
               type="text"
               placeholder="Wedding of Alex & Priya"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-sky-400 focus:ring-4 focus:ring-sky-400/10"
+              className="input-base"
             />
           </div>
           <button
             type="submit"
             disabled={!name.trim() || loading}
-            className="mt-5 inline-flex h-[42px] items-center justify-center rounded-xl bg-sky-400 px-4 text-sm font-semibold text-slate-950 shadow-sm shadow-sky-500/20 ring-1 ring-white/10 hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60 md:mt-0"
+            className="btn-primary mt-5 h-[42px] md:mt-0"
           >
             {loading ? "Creating..." : "Create event"}
           </button>
@@ -92,36 +100,71 @@ export default function EventsDashboardPage() {
         )}
       </section>
 
+      <section className="grid gap-3 md:grid-cols-3">
+        <article className="glass rounded-2xl p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-900">Step 1</h3>
+            <span className="status-chip">Create event</span>
+          </div>
+          <p className="text-sm text-slate-600">Create an event name that guests can identify easily.</p>
+        </article>
+        <article className="glass rounded-2xl p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-900">Step 2</h3>
+            <span className="status-chip">Upload photos</span>
+          </div>
+          <p className="text-sm text-slate-600">
+            Upload event photos through <code className="text-slate-800">/api/v1/upload/&lt;event_id&gt;</code>.
+          </p>
+        </article>
+        <article className="glass rounded-2xl p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-900">Step 3</h3>
+            <span className="status-chip">Share</span>
+          </div>
+          <p className="text-sm text-slate-600">Share the guest search link or QR with attendees.</p>
+        </article>
+      </section>
+
       {events.length > 0 ? (
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold text-slate-100">Recently created</h2>
+          <h2 className="text-sm font-semibold text-slate-900">Recently created</h2>
           <ul className="grid gap-3 md:grid-cols-2">
             {events.map((ev) => (
               <li key={ev.id} className="glass rounded-2xl p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold text-white">{ev.name}</div>
-                    <div className="mt-1 text-xs text-slate-400">
-                      ID: <code className="text-slate-200">{ev.id}</code>
+                    <div className="truncate text-sm font-semibold text-slate-900">{ev.name}</div>
+                    <div className="mt-1 text-xs text-slate-500">
+                      ID: <code className="text-slate-700">{ev.id}</code>
                     </div>
                   </div>
-                  <span className="rounded-full bg-white/5 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/10">
+                  <span className="status-chip">
                     {ev.status}
                   </span>
                 </div>
 
-                <div className="mt-3 text-xs text-slate-300">
-                  Guest link{" "}
-                  <span className="rounded-md bg-slate-950/40 px-2 py-1 ring-1 ring-white/10">
-                    <code className="text-slate-100">/events/{ev.id}/search</code>
-                  </span>
+                <div className="mt-3 space-y-2 text-xs text-slate-600">
+                  <div>
+                    Guest link{" "}
+                    <span className="rounded-md bg-slate-100 px-2 py-1 ring-1 ring-slate-200">
+                      <code className="text-slate-800">/events/{ev.id}/search</code>
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => copyGuestLink(ev.id)}
+                    className="btn-secondary w-full py-2 text-xs"
+                  >
+                    {copiedEventId === ev.id ? "Copied" : "Copy guest link"}
+                  </button>
                 </div>
               </li>
             ))}
           </ul>
         </section>
       ) : (
-        <section className="glass rounded-2xl p-6 text-sm text-slate-200">
+        <section className="glass rounded-2xl p-6 text-sm text-slate-600">
           No events yet. Create one to generate a guest search link.
         </section>
       )}
