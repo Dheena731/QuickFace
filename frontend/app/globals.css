@@ -1,26 +1,38 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    background: radial-gradient(1200px 800px at 15% 0%, rgba(56, 189, 248, 0.20), transparent 55%),
+      radial-gradient(900px 700px at 85% 10%, rgba(99, 102, 241, 0.16), transparent 55%),
+      radial-gradient(circle at top, #0f172a, #020617 60%);
+  }
+
+  a {
+    text-decoration: none;
+  }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+      monospace;
+  }
 }
 
-html,
-body {
-  margin: 0;
-  padding: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-body {
-  background: radial-gradient(circle at top, #0f172a, #020617 60%);
-  color: #e5e7eb;
-}
-
-a {
-  text-decoration: none;
-}
-
-button {
-  font: inherit;
+@layer utilities {
+  .glass {
+    @apply border border-white/10 bg-white/5 backdrop-blur;
+  }
 }
 
