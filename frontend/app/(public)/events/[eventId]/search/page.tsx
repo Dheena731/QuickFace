@@ -40,13 +40,43 @@ export default function EventSearchPage({
         method: "POST",
         body: form,
       });
+
+      const data = await res.json().catch(() => ({}));
+
       if (!res.ok) {
-        throw new Error(`Search failed with status ${res.status}`);
+        const detail = data.detail || `Search failed (HTTP ${res.status})`;
+        const errorMsg =
+          res.status === 404
+            ? "Event not found. Check the event ID."
+            : res.status === 413
+              ? "File is too large. Please try a smaller image."
+              : res.status === 500
+                ? "Server error. Please try again later."
+                : detail;
+        throw new Error(errorMsg);
       }
-      const data = await res.json();
-      setResults(data.results ?? []);
+
+      const results = data.results ?? [];
+      if (results.length === 0) {
+        setError(null); // No error, just no matches
+      }
+      setResults(results);
     } catch (err: any) {
-      setError(err.message ?? "Search failed");
+      // Provide helpful error messages
+      let errorMessage = "Search failed";
+
+      if (err instanceof TypeError) {
+        if (err.message.includes("fetch")) {
+          errorMessage = `Network error. Cannot reach API at ${apiBase}. Check the NEXT_PUBLIC_API_BASE environment variable.`;
+        } else {
+          errorMessage = err.message || "Network error";
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+
+      console.error("Search error:", err);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -104,7 +134,10 @@ export default function EventSearchPage({
           </div>
 
           {error && (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <div
+              className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+              role="alert"
+            >
               {error}
             </div>
           )}
@@ -129,14 +162,11 @@ export default function EventSearchPage({
 
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {results.map((item) => (
-              <figure
-                key={item.photo.id}
-                className="glass overflow-hidden rounded-2xl"
-              >
+              <figure key={item.photo.id} className="glass overflow-hidden rounded-2xl">
                 {item.photo.public_url ? (
                   <img
                     src={item.photo.public_url}
-                    alt="Match"
+                    alt={`Match photo #${item.photo.id}`}
                     className="h-44 w-full object-cover"
                   />
                 ) : (
@@ -156,11 +186,20 @@ export default function EventSearchPage({
         </section>
       )}
 
-      {!loading && !error && results.length === 0 && (
+      {!loading && !error && results.length === 0 && file && (
         <section className="glass rounded-2xl p-5">
-          <h2 className="text-sm font-semibold text-slate-900">No matches yet</h2>
+          <h2 className="text-sm font-semibold text-slate-900">No matches found</h2>
           <p className="mt-1 text-sm text-slate-600">
             Try another selfie with better lighting and a clear front-facing angle.
+          </p>
+        </section>
+      )}
+
+      {!loading && !error && results.length === 0 && !file && (
+        <section className="glass rounded-2xl p-5 text-center">
+          <h2 className="text-sm font-semibold text-slate-900">Ready to find your photos</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Upload a selfie above to get started.
           </p>
         </section>
       )}

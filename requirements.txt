@@ -11,4 +11,5 @@ minio
 pgvector
 face-recognition
 qrcode[pil]
-
+slowapi
+python-json-logger

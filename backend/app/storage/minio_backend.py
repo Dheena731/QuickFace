@@ -50,5 +50,10 @@ class MinioStorageBackend(StorageBackend):
             response.release_conn()
 
     def delete(self, key: str) -> None:
+        """Delete an object from storage."""
+        self._client.remove_object(self._bucket, key)
+
+
+    def delete(self, key: str) -> None:
         self._client.remove_object(self._bucket, key)
 
