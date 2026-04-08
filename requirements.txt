@@ -7,7 +7,7 @@ pydantic-settings
 python-multipart
 celery
 redis
-minio
+boto3
 pgvector
 face-recognition
 qrcode[pil]

@@ -18,16 +18,20 @@ class Settings(BaseSettings):
     # Redis / Celery
     redis_url: str = Field("redis://redis:6379/0", env="REDIS_URL")
 
-    # Object storage (MinIO, R2, or S3-compatible)
-    # Examples:
-    # MinIO: http://minio:9000
-    # R2: https://youraccount.r2.cloudflarestorage.com
-    # AWS S3: https://s3.amazonaws.com
-    storage_endpoint: str = Field("http://minio:9000", env="STORAGE_ENDPOINT")
-    storage_access_key: str = Field("minioadmin", env="STORAGE_ACCESS_KEY")
-    storage_secret_key: str = Field("minioadmin", env="STORAGE_SECRET_KEY")
+    # Object storage — Cloudflare R2 (S3-compatible)
+    # Endpoint format: https://<account_id>.r2.cloudflarestorage.com
+    storage_endpoint: str = Field(
+        "https://<account_id>.r2.cloudflarestorage.com",
+        env="STORAGE_ENDPOINT",
+    )
+    storage_access_key: str = Field(..., env="STORAGE_ACCESS_KEY")
+    storage_secret_key: str = Field(..., env="STORAGE_SECRET_KEY")
     storage_bucket: str = Field("quickface-photos", env="STORAGE_BUCKET")
-    storage_secure: bool = Field(False, env="STORAGE_SECURE")
+
+    # Optional: set this to your R2 custom domain or public bucket URL
+    # so that photo URLs are permanent links instead of presigned URLs.
+    # Example: https://photos.yourdomain.com
+    r2_public_domain: str | None = Field(None, env="R2_PUBLIC_DOMAIN")
 
     # CORS / frontend
     cors_origins: List[AnyHttpUrl] = Field(default_factory=list, env="CORS_ORIGINS")

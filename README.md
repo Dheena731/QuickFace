@@ -6,11 +6,11 @@ QuickFace is an open-source, self-hostable, AI-powered photo delivery platform f
 
 - **Face-based search**: guests upload a selfie and instantly see all matching photos from an event.
 - **Event isolation**: each event is scoped by a UUID; searches never cross events.
-- **S3-compatible storage**: uses MinIO locally, easily swappable for AWS/GCP/Azure S3-compatible storage.
+- **Cloudflare R2 storage**: zero-egress-fee S3-compatible object storage; supports optional public domain for permanent URLs.
 - **Vector search with pgvector**: embeddings stored and searched via Postgres + pgvector.
 - **Async processing pipeline**: Celery workers process photos in the background.
 - **Modern frontend**: Next.js frontend for guest search and a simple studio dashboard.
-- **Self-host ready**: single `docker-compose up` to run the full stack.
+- **Self-host ready**: single `docker-compose up` to run the full stack (DB, Redis, API, worker, frontend).
 
 ## Architecture
 
@@ -20,11 +20,11 @@ QuickFace is an open-source, self-hostable, AI-powered photo delivery platform f
   - `/dashboard/events` – minimal event creation dashboard.
 - **Backend**: FastAPI app in `backend/`
   - `POST /api/v1/events` – create events.
-  - `POST /api/v1/upload/{event_id}` – upload event photos to MinIO and enqueue processing.
+  - `POST /api/v1/upload/{event_id}` – upload event photos to R2 and enqueue processing.
   - `POST /api/v1/search/{event_id}` – selfie search using pgvector cosine similarity.
   - `GET /health` – health check.
 - **Workers**: Celery worker (`app.tasks.process_photo`) using Redis broker.
-- **Storage**: MinIO (S3-compatible) for photo objects.
+- **Storage**: Cloudflare R2 (S3-compatible) for photo objects. Uses `boto3` with a custom endpoint.
 - **Database**: Postgres + pgvector with `events`, `photos`, and `face_embeddings` tables.
 
 ## Quick start
@@ -37,7 +37,18 @@ cd quickface
 cp .env.example .env
 ```
 
-2. **Start the stack**
+Edit `.env` and fill in your Cloudflare R2 credentials:
+
+```dotenv
+STORAGE_ENDPOINT=https://<account_id>.r2.cloudflarestorage.com
+STORAGE_ACCESS_KEY=<your_r2_access_key_id>
+STORAGE_SECRET_KEY=<your_r2_secret_access_key>
+STORAGE_BUCKET=quickface-photos
+# Optional — set if your bucket has a public domain:
+R2_PUBLIC_DOMAIN=https://pub-xxx.r2.dev
+```
+
+1. **Start the stack**
 
 ```bash
 cd deploy
@@ -48,9 +59,8 @@ Services:
 
 - API: `http://localhost:8000`
 - Frontend: `http://localhost:3000`
-- MinIO console: `http://localhost:9001` (user/pass: `minioadmin` / `minioadmin`)
 
-3. **Create an event**
+1. **Create an event**
 
 Send a request to the API (e.g. via `curl`, Postman, or the dashboard):
 
@@ -62,7 +72,7 @@ curl -X POST http://localhost:8000/api/v1/events \
 
 The response contains an `id` you will use as `event_id`.
 
-4. **Upload photos**
+1. **Upload photos**
 
 ```bash
 curl -X POST "http://localhost:8000/api/v1/upload/<event_id>" \
@@ -72,7 +82,7 @@ curl -X POST "http://localhost:8000/api/v1/upload/<event_id>" \
 
 Celery workers will process these photos, detect faces, and write embeddings into `face_embeddings`.
 
-5. **Guest selfie search**
+1. **Guest selfie search**
 
 - Open the frontend: `http://localhost:3000/events/<event_id>/search`
 - Upload a selfie; QuickFace will run vector search in that event and show matching photos.
@@ -99,4 +109,3 @@ Point `NEXT_PUBLIC_API_BASE` in `.env` to your running backend URL.
 ## License
 
 QuickFace is released under the MIT License. See `LICENSE` for details.
-

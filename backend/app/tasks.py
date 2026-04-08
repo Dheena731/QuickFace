@@ -7,7 +7,7 @@ from .celery_app import celery_app
 from .dependencies import SessionLocal
 from .face.processor import extract_face_embeddings
 from .models import FaceEmbedding, Photo, PhotoProcessingStatusEnum
-from .storage.minio_backend import MinioStorageBackend
+from .storage.r2_backend import R2StorageBackend
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 def process_photo(self, photo_id: int) -> None:
     """Process a photo: extract faces and store embeddings."""
     db: Session = SessionLocal()
-    storage = MinioStorageBackend()
+    storage = R2StorageBackend()
     try:
         logger.info(f"Starting photo processing: photo_id={photo_id}")
         

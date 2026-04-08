@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, ConfigDict, HttpUrl
 
 
 class EventCreate(BaseModel):
@@ -13,23 +13,21 @@ class EventCreate(BaseModel):
 
 
 class EventOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     name: str
     slug: Optional[str] = None
     status: str
     created_at: datetime
 
-    class Config:
-        orm_mode = True
-
 
 class PhotoOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     event_id: UUID
     public_url: Optional[HttpUrl] = None
-
-    class Config:
-        orm_mode = True
 
 
 class SearchResultPhoto(BaseModel):

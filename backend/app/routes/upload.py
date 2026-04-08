@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from .. import models
 from ..config import get_settings
 from ..dependencies import get_db
-from ..storage.minio_backend import MinioStorageBackend
+from ..storage.r2_backend import R2StorageBackend
 from ..tasks import process_photo
 
 logger = logging.getLogger(__name__)
@@ -43,7 +43,7 @@ async def upload_photos(
             detail="Event not found"
         )
 
-    storage = MinioStorageBackend()
+    storage = R2StorageBackend()
     created = []
     uploaded_keys = []
 
