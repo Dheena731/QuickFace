@@ -2,12 +2,13 @@ import logging
 import uuid
 from typing import List
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from sqlalchemy.orm import Session
 
 from .. import models
 from ..config import get_settings
 from ..dependencies import get_db
+from ..rate_limiting import limiter
 from ..storage.r2_backend import R2StorageBackend
 from ..tasks import process_photo
 
@@ -22,7 +23,9 @@ MAX_BATCH_SIZE = settings.max_upload_batch_mb * 1024 * 1024
 
 
 @router.post("/{event_id}")
+@limiter.limit("20/minute")
 async def upload_photos(
+    request: Request,
     event_id: str,
     files: List[UploadFile] = File(...),
     db: Session = Depends(get_db),

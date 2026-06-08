@@ -1,8 +1,15 @@
 from functools import lru_cache
+from pathlib import Path
 from typing import List
 
 from pydantic import AnyHttpUrl, Field
 from pydantic_settings import BaseSettings
+
+# Resolve .env relative to this file so the location doesn't depend on CWD.
+# config.py lives at  <project>/backend/app/config.py
+# .env lives at       <project>/.env  (three levels up)
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+_ENV_FILE = _PROJECT_ROOT / ".env"
 
 
 class Settings(BaseSettings):
@@ -51,7 +58,7 @@ class Settings(BaseSettings):
     db_max_overflow: int = Field(10, env="DB_MAX_OVERFLOW")
 
     class Config:
-        env_file = ".env"
+        env_file = str(_ENV_FILE)
         env_file_encoding = "utf-8"
 
 

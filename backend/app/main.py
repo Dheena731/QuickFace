@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
 from .logging_config import setup_logging
+from .rate_limiting import setup_rate_limiting
 from .routes import event, upload, search
 
 # Setup logging
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 def create_app() -> FastAPI:
     app = FastAPI(title="QuickFace API", version="0.1.0")
     settings = get_settings()
+    setup_rate_limiting(app)
 
     # Add CORS middleware
     allowed_origins = [

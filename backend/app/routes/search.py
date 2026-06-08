@@ -2,7 +2,7 @@ import logging
 from typing import Annotated, List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -10,35 +10,38 @@ from .. import models, schemas
 from ..config import get_settings
 from ..dependencies import get_db
 from ..face.processor import extract_single_embedding
+from ..rate_limiting import limiter
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 settings = get_settings()
 
+# Minimum cosine similarity (0–1) for a result to be included.
+# Cosine distance from pgvector is in [0, 2]; similarity = 1 - distance.
+_MIN_SIMILARITY = 0.40
+
 
 @router.post("/{event_id}", response_model=schemas.SearchResponse)
+@limiter.limit("30/minute")
 async def search_by_selfie(
+    request: Request,
     event_id: str,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     top_k: Annotated[int, Query(ge=1, le=settings.max_search_results)] = 50,
+    min_similarity: Annotated[float, Query(ge=0.0, le=1.0)] = _MIN_SIMILARITY,
 ):
     """
     Search for matching photos using a selfie.
-    
+
     - Extracts face embedding from selfie
     - Searches using cosine distance in pgvector
-    - Returns top_k most similar photos
-    - Limited to the event_id for isolation
-    
-    Args:
-        event_id: UUID or string identifier of the event
-        file: Selfie image file (jpg, png, etc)
-        top_k: Number of top results to return (1-500, default 50)
+    - Filters results below min_similarity threshold (default 40%)
+    - Returns top_k most similar photos, isolated to the event
     """
     
-    logger.info(f"Search request for event_id={event_id}, top_k={top_k}")
+    logger.info(f"Search request for event_id={event_id}, top_k={top_k}, min_similarity={min_similarity}")
     
     # Verify event exists
     event = db.query(models.Event).filter(models.Event.id == event_id).first()
@@ -96,22 +99,25 @@ async def search_by_selfie(
         photo_map = {p.id: p for p in photos}
         results: List[schemas.SearchResultPhoto] = []
         
-        # Build results sorted by similarity
+        # Build results sorted by similarity, dropping low-confidence matches
         for photo_id, distance in sorted(best_by_photo.items(), key=lambda x: x[1]):
             photo = photo_map.get(photo_id)
             if not photo:
                 logger.warning(f"Photo {photo_id} not found in hydration")
                 continue
-            
+
             similarity = 1.0 - distance
+            if similarity < min_similarity:
+                continue
+
             results.append(
                 schemas.SearchResultPhoto(
                     photo=schemas.PhotoOut.from_orm(photo),
                     similarity=similarity,
                 )
             )
-        
-        logger.info(f"Returning {len(results)} results for event {event_id}")
+
+        logger.info(f"Returning {len(results)} results for event {event_id} (threshold={min_similarity})")
         return schemas.SearchResponse(results=results)
     
     except Exception as exc:
